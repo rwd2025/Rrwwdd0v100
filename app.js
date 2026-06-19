@@ -14,8 +14,7 @@ const RWD = {
       companyWebsite:"www.rollingwrenchdiesel.com",
       laborRate:135,
       tax:0,
-      squareLink:"https://squareup.com/dashboard",
-      backendUrl:""
+      squareLink:"https://squareup.com/dashboard"
     });
   }
 };
@@ -361,7 +360,6 @@ const TruckManager = {
   saveFromForm(){
     const t = {vin:$("vinGlobal").value.trim().toUpperCase() || "NONE", year:$("yearGlobal").value, make:$("makeGlobal").value, model:$("modelGlobal").value, engine:$("engineGlobal").value, esn:$("esnGlobal").value, cpl:$("cplGlobal").value, odometer:$("odometerGlobal").value};
     RWD.save("RWD_TRUCK", t);
-    if(t.vin && t.vin !== "NONE") RWDVinAdapter.decode(t.vin);
     this.apply(t);
     ThemeManager.setGhost();
     showToast("Truck saved");
@@ -528,87 +526,6 @@ const JobDispatcher = {
   finance(id){ const record={...JobClockManager.getJobSummary(id), date:new Date().toISOString(), type:"labor"}; const hist=RWD.safeJson("RWD_FINANCE", []); hist.push(record); RWD.save("RWD_FINANCE", hist); FinanceManager.render(); showToast("Finance record saved"); }
 };
 
-
-/* =========================================================
-   BA001 WIRING ADAPTERS — keeps V5 look, wires real data flow.
-   These adapters run locally now and can point to a backend later by
-   setting RWD_SETTINGS.backendUrl in Settings/localStorage.
-   ========================================================= */
-const RWDBackendAdapter = {
-  endpoint(){
-    const s = RWD.settings();
-    return (s.backendUrl || "").replace(/\/$/, "");
-  },
-  queue(type, payload){
-    const item = {type, payload, ts:new Date().toISOString(), truck:TruckManager.get()};
-    const q = RWD.safeJson("RWD_SYNC_QUEUE", []);
-    q.unshift(item);
-    RWD.save("RWD_SYNC_QUEUE", q.slice(0,100));
-    return item;
-  },
-  async post(path, payload){
-    const base = this.endpoint();
-    const item = this.queue(path, payload);
-    if(!base) return {ok:false, queued:true, item, reason:"No backend URL configured"};
-    try{
-      const res = await fetch(base + path, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload)
-      });
-      const data = await res.json().catch(()=>({}));
-      return {ok:res.ok, status:res.status, data, item};
-    }catch(err){
-      return {ok:false, queued:true, error:err.message, item};
-    }
-  }
-};
-
-const RWDDataBus = {
-  saveRecord(bucket, record){
-    const rows = RWD.safeJson(bucket, []);
-    const saved = {id:"rwd_"+Date.now()+"_"+Math.random().toString(16).slice(2), ts:new Date().toISOString(), ...record};
-    rows.unshift(saved);
-    RWD.save(bucket, rows.slice(0,250));
-    return saved;
-  },
-  getRecords(bucket){ return RWD.safeJson(bucket, []); },
-  clearAll(){
-    ["RWD_SYNC_QUEUE","RWD_SCAN_RECORDS","RWD_WORK_ORDERS","RWD_REPAIR_MEMORY","RWD_REPORT_EVENTS"].forEach(k=>localStorage.removeItem(k));
-  }
-};
-
-const RWDOcrAdapter = {
-  async capture(source, meta={}){
-    const record = RWDDataBus.saveRecord("RWD_SCAN_RECORDS", {
-      source,
-      meta,
-      status:"READY_FOR_OCR_BACKEND",
-      note:"Photo/scan saved locally. Connect backend /api/ocr to extract VIN, part numbers, prices, handwriting, and fault screens."
-    });
-    await RWDBackendAdapter.post("/api/ocr", record);
-    return record;
-  }
-};
-
-const RWDVinAdapter = {
-  async decode(vin){
-    const clean = String(vin||"").trim().toUpperCase();
-    const payload = {vin:clean, truck:TruckManager.get()};
-    const result = await RWDBackendAdapter.post("/api/vin/decode", payload);
-    return {vin:clean, backend:result, message: result.ok ? "VIN sent to backend decoder." : "VIN saved locally; backend decoder not configured yet."};
-  }
-};
-
-const RWDPartsAdapter = {
-  async lookup(query){
-    const payload = {query, truck:TruckManager.get(), mode:PartsBrain?.mode || "lookup"};
-    const result = await RWDBackendAdapter.post("/api/parts/lookup", payload);
-    return {query, backend:result, message: result.ok ? "Parts lookup sent to backend." : "Parts lookup saved locally; backend not configured yet."};
-  }
-};
-
-
 const FinanceManager = {
   render(){
     const hist=RWD.safeJson("RWD_FINANCE", []);
@@ -624,12 +541,7 @@ const ScanManager = {
       $("cameraFeed").srcObject=stream; $("cameraStatus").textContent="ACTIVE"; showToast("Camera active");
     }catch(e){ $("scanOut").textContent=`Camera unavailable: ${e.message}`; showToast("Camera blocked/unavailable"); }
   },
-  async capture(){
-    const record = await RWDOcrAdapter.capture("camera-frame", {screen:NavigationManager.current});
-    const out = $("scanOut");
-    if(out) out.textContent = `Scan saved and wired.\nRecord: ${record.id}\nStatus: ${record.status}\nNext: connect /api/ocr backend for VIN, part number, price, handwriting, and fault extraction.`;
-    showToast("Scan saved");
-  }
+  capture(){ $("scanOut").textContent="Frame captured placeholder. OCR/AI backend will read VIN, part numbers, labels, handwriting, and fault screens here."; }
 };
 
 const RwdAI = {
@@ -674,7 +586,7 @@ const ButtonAudit = {
 const DebugPanel = {
   refresh(){
     const report=ButtonAudit.run();
-    const state={audit:report,jobs:JobClockManager.jobs,truck:TruckManager.get(),invoice:RWD.safeJson("RWD_ACTIVE_INVOICE",null),finance:RWD.safeJson("RWD_FINANCE",[]),settings:RWD.settings(),theme:document.body.dataset.theme,version:"RWD-V5-main4-fixed-wired", syncQueue:RWD.safeJson("RWD_SYNC_QUEUE",[]), scans:RWD.safeJson("RWD_SCAN_RECORDS",[])};
+    const state={audit:report,jobs:JobClockManager.jobs,truck:TruckManager.get(),invoice:RWD.safeJson("RWD_ACTIVE_INVOICE",null),finance:RWD.safeJson("RWD_FINANCE",[]),settings:RWD.settings(),theme:document.body.dataset.theme,version:"new-repo-build-1.0"};
     $("debugOutput").textContent=JSON.stringify(state,null,2);
   }
 };
@@ -767,13 +679,7 @@ const PartsBrain = {
     if(low.match(/\\b\\d{5,}\\b/) || low.includes("part number") || low.includes("what does") || low.includes("fit")) return `<b>Part Number Lookup / Cross Reference</b><br>Query: ${escapeHtml(q)}<br>Show what it fits, OEM/aftermarket crosses, supersessions, market estimate, job kit, and last 8 VIN prompt.`;
     return `<b>Parts Lookup Brain</b><br>Query: ${escapeHtml(q)}<br>Show likely OEM/aftermarket options first, estimated cost range, job kit, then ask last 8 VIN only when exact fitment matters.`;
   },
-  async run(){
-    const q = $("partsQuestion")?.value || "";
-    const out=$("partsAiOutput");
-    if(out) out.innerHTML=this.answer(q) + "<br><br><small>Saving lookup to backend-ready queue...</small>";
-    const wired = await RWDPartsAdapter.lookup(q);
-    if(out) out.innerHTML += `<br><br><small>${escapeHtml(wired.message)}</small>`;
-  }
+  run(){ const out=$("partsAiOutput"); if(out) out.innerHTML=this.answer($("partsQuestion")?.value||""); }
 };
 
 
@@ -997,9 +903,9 @@ function boot(){
   JobClockManager.init();
   InvoiceBuilder.render();
   FinanceManager.render();
-  $("masterCommandInput")?.addEventListener("focus", () => AiFullScreen.open());
-  $("masterCommandInput")?.addEventListener("keydown", e => { if(e.key==="Enter"){ AiFullScreen.open(); if($("aiFullInput")) $("aiFullInput").value=e.target.value; AiFullScreen.send(); e.target.value=""; }});
-  $("aiInput")?.addEventListener("keydown", e => { if(e.key==="Enter") Actions.askAI(); });
+  $("masterCommandInput").addEventListener("focus", () => AiFullScreen.open());
+  $("masterCommandInput").addEventListener("keydown", e => { if(e.key==="Enter"){ AiFullScreen.open(); $("aiFullInput").value=e.target.value; AiFullScreen.send(); e.target.value=""; }});
+  $("aiInput").addEventListener("keydown", e => { if(e.key==="Enter") Actions.askAI(); });
   $("aiDrawerInput")?.addEventListener("keydown", e => { if(e.key==="Enter") AiDrawer.ask(); });
   $("aiUploadPhoto")?.addEventListener("change", e => AiDrawer.handleFile(e.target.files?.[0]));
   $("aiTakePhoto")?.addEventListener("change", e => AiDrawer.handleFile(e.target.files?.[0]));

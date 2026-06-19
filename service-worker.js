@@ -1,44 +1,5 @@
-const CACHE_NAME='rwd-command-center-v5-main4-fixed-20260618';
-const ASSETS=[
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json',
-  './icon-192.svg',
-  './icon-512.svg',
-  './assets/icon-192.svg',
-  './assets/icon-512.svg'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => Promise.allSettled(ASSETS.map(asset => cache.add(asset))))
-      .then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
-          return response;
-        })
-        .catch(() => caches.match('./index.html'));
-    })
-  );
-});
+const CACHE='rwd-ba001-v5-finished-20260619';
+const ASSETS=['./','./index.html','./style.css','./ba001-finish.css','./app.js','./ba001-finish.js','./manifest.json','./assets/icon-192.svg','./assets/icon-512.svg','./icon-192.svg','./icon-512.svg'];
+self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS).catch(()=>cache.addAll(['./','./index.html','./style.css','./app.js']))));});
+self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;event.respondWith(fetch(event.request).then(resp=>{const copy=resp.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));return resp;}).catch(()=>caches.match(event.request).then(resp=>resp||caches.match('./index.html'))));});
