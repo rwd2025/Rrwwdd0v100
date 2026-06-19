@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>RWD Command Center</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icon-192.svg" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-theme="ultimate" data-engine="cummins">
+  <div class="dashboard-app" id="dashboardApp">
+    <div class="texture-layer"></div>
+    <div class="engine-ghost" id="engineGhost"></div>
+    <div class="noise-layer"></div>
+
+    <div class="ui-layer">
+      <header class="command-header">
+        <button class="icon-btn" data-action="menu" aria-label="Menu">☰</button>
+        <div class="brand-mark">RW</div>
+        <div class="brand-copy">
+          <h1>ROLLING <span>WRENCH</span> AI</h1>
+          <p>DIESEL DIAGNOSTICS & REPAIR PLATFORM</p>
+        </div>
+        <button class="status-bell" data-nav="debug" aria-label="Debug">●<b id="alertCount">0</b></button>
+        <button class="icon-btn" data-nav="settings" aria-label="Settings">⚙</button>
+      </header>
+
+      <aside id="sideMenu" class="side-menu">
+        <button data-nav="clock">Home Command Center</button>
+        <button data-nav="truck">Truck Profile</button>
+        <button data-nav="clock">Jobs / Time Clock</button>
+        <button data-nav="parts">Parts / Scan</button>
+        <button data-nav="invoice">Invoice Paper</button>
+        <button data-nav="debug">Debug / Test</button>
+        <button data-action="close-menu">Close Menu</button>
+      </aside>
+
+      <section class="active-strip" data-nav="truck">
+        <div><i></i><strong>ACTIVE TRUCK</strong></div>
+        <span id="stripEngine">CUMMINS X15</span>
+        <span>VIN: <b id="stripVin">NONE</b></span>
+        <span class="connected">READY</span>
+      </section>
+
+      <main class="screen active" id="home">
+        <section class="hero-grid">
+          <article class="hero-card time-card clickable" data-nav="clock">
+            <div class="card-label">TIME CLOCK</div>
+            <small class="live-dot" id="clockStatus">READY</small>
+            <strong id="home-total-time">00:00:00</strong>
+            <span>Combined Labor</span>
+            <b id="home-total-dollars">$0.00</b>
+            <button class="btn-outline" data-nav="clock">OPEN CLOCK</button>
+          </article>
+
+          <article class="hero-card truck-hero clickable" data-nav="truck">
+            <div class="card-label">ACTIVE TRUCK</div>
+            <div class="truck-visual"><div class="truck-svg">▰▰</div></div>
+            <div class="truck-info">
+              <h2 id="heroTruck">NO ACTIVE TRUCK</h2>
+              <p>VIN: <span id="heroVin">NONE</span></p>
+              <p>Engine: <span id="heroEngine">CUMMINS X15</span></p>
+              <p>CPL: <span id="heroCpl">----</span></p>
+              <p>Odometer: <span id="heroOdo">----</span></p>
+            </div>
+            <button class="btn-outline" data-nav="truck">TRUCK PROFILE</button>
+          </article>
+
+          <article class="hero-card health-card clickable" data-nav="debug">
+            <div class="card-label">SYSTEM STATUS</div>
+            <div class="health-ring"><strong>98<span>%</span></strong><em>HEALTH</em></div>
+            <small class="good">Frontend Tests Ready</small>
+            <button class="btn-outline" data-nav="debug">DEBUG TEST</button>
+          </article>
+        </section>
+
+        <section class="rwd-command-bar">
+          <button class="rw-orb" data-nav="ai">RW</button>
+          <div class="command-input-wrap">
+            <input id="masterCommandInput" placeholder="Ask RWD AI anything: VIN, part #, fault code, invoice, time..." />
+            <small>Master search + AI command + scan workflow</small>
+          </div>
+          <button class="round-tool" data-action="voice">🎙</button>
+          <button class="round-tool" data-nav="scan">📷</button>
+        </section>
+
+        <section class="module-grid" id="moduleGrid"></section>
+
+        <section class="panel-grid">
+          <article class="data-panel">
+            <div class="panel-title"><span>TOP FAULTS TODAY</span><button data-nav="faults">View</button></div>
+            <div class="fault-row"><b>SPN 157</b><span>EGR / Fuel Rail Context</span><em>3</em></div>
+            <div class="fault-row"><b>SPN 3251</b><span>DPF Differential Pressure</span><em>2</em></div>
+            <div class="fault-row"><b>SPN 111</b><span>Coolant Level / Temp</span><em>1</em></div>
+          </article>
+          <article class="data-panel">
+            <div class="panel-title"><span>RECENT JOBS</span><button data-nav="clock">Open</button></div>
+            <div class="wo-row"><b>JOB 1</b><span id="job1Mini">00:00:00</span><em>READY</em></div>
+            <div class="wo-row"><b>JOB 2</b><span id="job2Mini">00:00:00</span><em>READY</em></div>
+            <div class="wo-row"><b>JOB 3</b><span id="job3Mini">00:00:00</span><em>READY</em></div>
+          </article>
+          <article class="data-panel earnings-panel">
+            <div class="panel-title"><span>EARNINGS SUMMARY</span><button data-nav="finance">Finance</button></div>
+            <strong id="weekEarnings">$0.00</strong>
+            <span>Tracked In App</span>
+            <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <button class="btn-outline" data-nav="finance">VIEW FINANCE</button>
+          </article>
+        </section>
+
+        <section class="system-strip">
+          <div><b>GPS</b><em id="gpsStatus">READY</em><i></i></div>
+          <div><b>CAMERA</b><em id="cameraStatus">READY</em><i></i></div>
+          <div><b>STORAGE</b><em id="storageStatus">LOCAL</em><i></i></div>
+          <div><b>BUTTONS</b><em id="auditStatus">TEST</em><i></i></div>
+        </section>
+      </main>
+
+      <main class="screen" id="clock">
+        <h2 class="screen-title">Jobs / Time Clock</h2>
+        <section class="clock-summary-card">
+          <div><span>Total Time</span><strong id="clockPageTotalTime">00:00:00</strong></div>
+          <div><span>Total Labor</span><strong id="clockPageTotalMoney">$0.00</strong></div>
+          <div><span>Rate</span><strong id="clockRateDisplay">$135/hr</strong></div>
+        </section>
+        <section class="job-clock-grid" id="jobClockGrid"></section>
+      </main>
+
+      <main class="screen" id="truck">
+        <h2 class="screen-title">Truck Profile</h2>
+        <div class="form-grid">
+          <label>VIN<input id="vinGlobal" placeholder="Enter or scan VIN"></label>
+          <label>Year<input id="yearGlobal" placeholder="Year"></label>
+          <label>Make<input id="makeGlobal" placeholder="Make"></label>
+          <label>Model<input id="modelGlobal" placeholder="Model"></label>
+          <label>Engine<select id="engineGlobal">
+            <option>Cummins X15</option><option>Cummins ISX15</option><option>Detroit DD15</option><option>PACCAR MX-13</option><option>CAT C15</option><option>Mack / Volvo D13</option><option>International A26</option>
+          </select></label>
+          <label>ESN<input id="esnGlobal" placeholder="Engine serial"></label>
+          <label>CPL<input id="cplGlobal" placeholder="CPL"></label>
+          <label>Odometer<input id="odometerGlobal" placeholder="Miles"></label>
+        </div>
+        <div class="button-row">
+          <button data-action="save-truck">SAVE ACTIVE TRUCK</button>
+          <button data-action="clear-truck">CLEAR TRUCK</button>
+        </div>
+        <pre class="output" id="truckOut">Truck profile ready.</pre>
+      </main>
+
+      <main class="screen" id="parts">
+        <h2 class="screen-title">OEM Parts Lookup</h2>
+        <section class="parts-lookup-command">
+          <div class="pro-header">
+            <h3>PARTS LOOKUP BRAIN</h3>
+            <span class="status-pill">CROSS REF READY</span>
+          </div>
+          <div class="parts-mode-grid">
+            <button data-action="parts-mode-unknown">WHAT PART IS THIS?</button>
+            <button data-action="parts-mode-number">PART NUMBER LOOKUP</button>
+            <button data-action="parts-mode-cross">CROSS REFERENCE</button>
+            <button data-action="parts-mode-fitment">VERIFY FITMENT</button>
+          </div>
+          <label class="pro-label">Question / Part / Symptom / Truck Context
+            <textarea id="partsQuestion" class="pro-textarea parts-big-question" placeholder="Example: 2019 International LT X15 water pump. Or: What does Cummins 23539639 fit? Or upload a photo and ask what part this is."></textarea>
+          </label>
+          <div class="parts-tools-grid">
+            <button data-action="parts-ai-search">ASK PARTS AI</button>
+            <button data-action="parts-upload-photo">UPLOAD PHOTO</button>
+            <button data-action="parts-take-photo">TAKE PHOTO</button>
+            <button data-action="open-ai-drawer">ASK ANYTHING</button>
+          </div>
+          <div class="parts-verify-strip">
+            <span>Fitment Rule</span>
+            <strong>Show likely options first → ask last 8 VIN for exact verified part number.</strong>
+          </div>
+          <div class="parts-result-panel" id="partsAiOutput">
+            Ask what part it is, what the part number is, what it fits, or cross-reference an OEM/aftermarket number.
+          </div>
+        </section>
+        <section class="parts-secondary-actions">
+          <button data-nav="invoice">SMART QUOTES / INVOICE</button>
+          <button data-nav="workorders">WORK ORDERS</button>
+          <button data-nav="suppliers">SUPPLIERS</button>
+        </section>
+      </main>
+
+      <main class="screen" id="invoice">
+        <h2 class="screen-title">Smart Quotes</h2>
+        <section class="quote-engine">
+          <div class="pro-header"><h3>SMART ESTIMATOR</h3><span class="status-pill">SERVICE QUOTE</span></div>
+          <label class="pro-label">Customer Request
+            <textarea id="quoteRequest" class="pro-textarea quote-request" placeholder="Example: 2019 X15 water pump. How much in-house vs service call?"></textarea>
+          </label>
+          <div class="quote-type-grid">
+            <button data-quote-type="inhouse" class="quote-type active">IN-HOUSE<br><small>No service call</small></button>
+            <button data-quote-type="mobile" class="quote-type">MOBILE / ONSITE<br><small>Add service fee</small></button>
+            <button data-quote-type="roadside" class="quote-type">ROADSIDE<br><small>Emergency rate</small></button>
+          </div>
+          <div class="quote-input-grid">
+            <label>Labor Rate<input id="quoteLaborRate" value="135"></label>
+            <label>Service Call Fee<input id="quoteServiceFee" value="250"></label>
+            <label>Tax %<input id="quoteTaxRate" value="7"></label>
+            <label>Shop Supplies %<input id="quoteSuppliesRate" value="5"></label>
+          </div>
+          <div class="quote-action-grid">
+            <button data-action="build-smart-quote">BUILD QUOTE</button>
+            <button data-action="quote-copy-customer">COPY CUSTOMER QUOTE</button>
+            <button data-action="quote-to-workorder">TO WORK ORDER</button>
+            <button data-action="quote-to-invoice">UPDATE PAPER</button>
+          </div>
+          <div class="quote-panels">
+            <section class="quote-panel internal"><h4>INTERNAL ESTIMATE</h4><div id="quoteInternal">Enter a job and build quote. Internal view can show estimated market/part logic.</div></section>
+            <section class="quote-panel customer"><h4>CUSTOMER PRICE</h4><div id="quoteCustomer">Customer-facing quote hides your market cost and markup.</div></section>
+          </div>
+        </section>
+        <section class="paper-sheet invoice-paper">
+          <div class="invoice-header"><div><h2 class="invoice-title">Rolling Wrench Diesel</h2><p>Smart Quote / Invoice Preview</p></div><span class="invoice-status-pill">DRAFT</span></div>
+          <div id="invoice-paper-layout">Build a smart quote to preview the customer-facing estimate.</div>
+        </section>
+      </main>
+
+
+      <main class="screen" id="ai">
+        <h2 class="screen-title">RWD AI Master Command</h2>
+        <section class="chat-box" id="chatBox"><div class="ai-msg">Ask anything. Try: “start job 1”, “send job 1 to invoice”, “open parts”, “FleetPride near me”.</div></section>
+        <div class="chatbar"><input id="aiInput" placeholder="Ask RWD AI..."><button data-action="ask-ai">SEND</button></div>
+      </main>
+
+      <main class="screen" id="scan">
+        <h2 class="screen-title">Camera / OCR Shell</h2>
+        <section class="scan-panel">
+          <video id="cameraFeed" playsinline autoplay muted></video>
+          <div class="button-row">
+            <button data-action="start-camera">START CAMERA</button>
+            <button data-action="capture-scan">CAPTURE</button>
+          </div>
+          <pre class="output" id="scanOut">Scan VIN, part number, handwritten numbers, labels, or fault screens. OCR backend plugs in later.</pre>
+        </section>
+      </main>
+
+      <main class="screen" id="settings">
+        <h2 class="screen-title">Settings / Themes</h2>
+        <section class="settings-card">
+          <h3>Theme Skin</h3>
+          <div class="theme-grid" id="themeGrid"></div>
+        </section>
+        <section class="settings-card">
+          <h3>Company Profile for Invoices</h3>
+          <div class="form-grid">
+            <label>Company Name<input id="companyName" value="Rolling Wrench Diesel"></label>
+            <label>Phone<input id="companyPhone" value="260-502-6222"></label>
+            <label>Website<input id="companyWebsite" value="www.rollingwrenchdiesel.com"></label>
+            <label>Labor Rate<input id="defaultLaborRate" value="135"></label>
+            <label>Tax %<input id="defaultTax" value="0"></label>
+            <label>Square Link<input id="squareLink" placeholder="Paste Square payment/invoice link"></label>
+          </div>
+          <button data-action="save-settings">SAVE SETTINGS</button>
+        </section>
+
+        <section class="settings-card">
+          <h3>Shop / Job Defaults</h3>
+          <div class="form-grid">
+            <label>Job Type<select id="defaultJobType"><option>In-House</option><option>Mobile Service Call</option></select></label>
+            <label>Service Call Fee<input id="serviceCallFee" value="250"></label>
+            <label>Shop Supplies Mode<select id="shopSuppliesMode"><option value="percentLabor">% of Labor</option><option value="percentTotal">% of Total</option><option value="fixed">Fixed Fee</option><option value="off">Off</option></select></label>
+            <label>Shop Supplies Value<input id="shopSuppliesValue" value="5"></label>
+            <label>Emergency Multiplier<input id="emergencyMultiplier" value="1.5"></label>
+            <label>Travel / Mileage Fee<input id="travelFee" value="0"></label>
+          </div><button data-action="save-shop-defaults">SAVE SHOP DEFAULTS</button>
+        </section>
+        <section class="settings-card"><h3>OEM Environments</h3><div class="theme-grid oem-grid" id="oemGrid"><button class="theme-pill" data-oem="cummins">Cummins X15</button><button class="theme-pill" data-oem="detroit">Detroit DD15</button><button class="theme-pill" data-oem="cat">CAT C15</button><button class="theme-pill" data-oem="paccar">PACCAR MX</button><button class="theme-pill" data-oem="volvo">Mack / Volvo</button><button class="theme-pill" data-oem="fleet">Fleet Mode</button></div></section>
+
+      </main>
+
+
+        <section class="settings-card invoice-config-pro-list">
+          <h3>Professional Invoice System</h3>
+          <div class="invoice-config-grid">
+            <span>Logo / Branding</span><span>Invoice # / RO #</span><span>Customer + Unit</span><span>VIN / ESN / CPL</span>
+            <span>Complaint / Cause / Correction</span><span>Labor Lines</span><span>Parts + Job Kits</span><span>Shop Supplies</span>
+            <span>Tax / Card Fee</span><span>Square Link</span><span>PDF Export</span><span>Signature Block</span>
+          </div>
+        </section>
+      </main>
+
+
+        <section class="settings-card theme-reset-panel">
+          <h3>Theme / OEM Environment</h3>
+          <p class="settings-hint">Default / Off returns the app to the original Rolling Wrench industrial orange look.</p>
+          <div class="theme-grid">
+            <button id="themeResetOff" data-theme-choice="default">DEFAULT / OFF</button>
+            <button data-theme-choice="rolling">ROLLING ORANGE</button>
+            <button data-theme-choice="cummins">CUMMINS</button>
+            <button data-theme-choice="detroit">DETROIT</button>
+            <button data-theme-choice="cat">CAT</button>
+            <button data-theme-choice="paccar">PACCAR</button>
+            <button data-theme-choice="night">NIGHT OPS</button>
+          </div>
+        </section>
+
+      <main class="screen" id="debug">
+        <h2 class="screen-title">Debug / Test Panel</h2>
+        <section class="settings-card">
+          <button data-action="run-audit">RUN BUTTON AUDIT</button>
+          <button data-action="clear-local">CLEAR LOCAL DATA</button>
+          <pre class="output" id="debugOutput">Debug ready.</pre>
+        </section>
+      </main>
+
+      <main class="screen" id="finance">
+        <h2 class="screen-title">Finance Ledger</h2>
+        <section class="generic-card"><pre id="financeOut">No records yet.</pre></section>
+      </main>
+
+      <main class="screen" id="faults"><h2 class="screen-title">Fault Doctor</h2><section class="generic-card"></section></main>
+      <main class="screen" id="repair"><h2 class="screen-title">Repair HUD</h2><section class="generic-card"></section></main>
+      <main class="screen" id="reports"><h2 class="screen-title">Reports</h2><section class="generic-card"></section></main>
+      <main class="screen" id="gps"><h2 class="screen-title">Pin Drop</h2><section class="generic-card">GPS/dealer workflow. Opens location-aware dealer search when backend/location permission is connected.<br><br><button class="btn-outline" onclick="window.open(\'https://www.google.com/maps/search/heavy+duty+truck+parts+near+me\',\'_blank\')">OPEN NEARBY PARTS DEALERS</button></section></main>
+      <main class="screen" id="suppliers"><h2 class="screen-title">Suppliers</h2><section class="generic-card">FleetPride, Cummins, Peterbilt, Kenworth, Freightliner, Detroit, CAT, Mack/Volvo, NAPA HD, O\'Reilly HD supplier links and price lookup hooks.</section></main>
+
+      <main class="screen" id="workorders">
+        <h2 class="screen-title">Work Orders</h2>
+        <section class="generic-card"></section>
+      </main>
+
+      <main class="screen" id="memory">
+        <h2 class="screen-title">Repair Memory</h2>
+        <section class="generic-card"></section>
+      </main>
+
+      <main class="screen" id="emergency">
+        <h2 class="screen-title">Emergency / Roadside</h2>
+        <section class="generic-card"></section>
+      </main>
+
+      <main class="screen" id="generic"><h2 class="screen-title" id="genericTitle">Module</h2><section class="generic-card" id="genericContent">Ready.</section></main>
+
+
+      <section class="ai-drawer" id="aiDrawer" aria-hidden="true">
+        <div class="ai-drawer-head"><button class="ai-back" data-action="close-ai-drawer">← BACK</button><strong>ASK RWD AI</strong><button class="ai-clear" data-action="clear-ai-chat">CLEAR</button></div>
+        <div class="ai-attach-preview" id="aiAttachPreview">No photo attached.</div>
+        <section class="chat-box ai-drawer-chat" id="aiDrawerChat"><div class="ai-msg">Ask anything: parts, VIN, fault codes, job kits, invoices, oil capacity, shop supplies, or repair procedures.</div></section>
+        <div class="ai-tools-row"><label class="ai-tool">🖼 Upload Photo<input id="aiUploadPhoto" type="file" accept="image/*" hidden></label><label class="ai-tool">📷 Take Photo<input id="aiTakePhoto" type="file" accept="image/*" capture="environment" hidden></label><button class="ai-tool" data-action="voice">🎙 Voice</button></div>
+        <div class="chatbar ai-drawer-bar"><input id="aiDrawerInput" placeholder="Ask RWD AI anything..."><button data-action="ask-ai-drawer">SEND</button></div>
+      </section>
+
+
+      <main class="screen" id="ai-full">
+        <h2 class="screen-title">Ask RWD AI</h2>
+        <section class="ai-full-screen">
+          <div class="ai-full-top">
+            <button data-action="ai-full-back">← BACK</button>
+            <strong>ROLLING WRENCH AI</strong>
+            <button data-action="ai-full-clear">CLEAR</button>
+          </div>
+          <div class="ai-full-attach" id="aiFullAttach">No photo attached.</div>
+          <section class="ai-full-chat" id="aiFullChat">
+            <div class="ai-msg">Ask anything: parts, VIN, fault codes, oil capacity, repair steps, where am I, time, invoice, work orders, job kits, or photos.</div>
+          </section>
+          <div class="ai-full-tools">
+            <label>🖼 Upload Photo<input id="aiFullUpload" type="file" accept="image/*" hidden></label>
+            <label>📷 Take Photo<input id="aiFullCamera" type="file" accept="image/*" capture="environment" hidden></label>
+            <button data-action="ai-full-voice">🎙 Voice</button>
+          </div>
+          <div class="ai-full-input">
+            <textarea id="aiFullInput" placeholder="Ask Rolling Wrench AI anything..."></textarea>
+            <button data-action="ai-full-send">SEND</button>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav">
+        <button class="active" data-nav="clock">⌂<b>HOME</b></button>
+        <button data-nav="faults">⚕<b>DOCTOR</b></button>
+        <button data-nav="parts">⚙<b>PARTS</b></button>
+        <button data-nav="repair">🛠<b>REPAIR</b></button>
+        <button data-nav="settings">⋯<b>MORE</b></button>
+      </nav>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

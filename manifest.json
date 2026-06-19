@@ -1,0 +1,26 @@
+{
+  "name": "RWD Command Center",
+  "short_name": "RWD AI",
+  "description": "RWD Command Center diesel diagnostics, jobs, invoices, parts, and AI command PWA.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#F59E0B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "rwd-ba001-v5-main4-fixed",
+  "scope": "./"
+}
