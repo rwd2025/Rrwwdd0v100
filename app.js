@@ -283,6 +283,7 @@ Finance Records: ${$("reportRecords")?.textContent || "0"}`;
 
 const NavigationManager = {
   current:"home",
+  history:[],
   init(){
     document.addEventListener("click", e => {
       const nav = e.target.closest("[data-nav]");
@@ -298,10 +299,14 @@ const NavigationManager = {
       }
     });
   },
-  navigate(id){
+  navigate(id, opts={}){
     id = HomeRouteAlias.resolve(id);
     const mod = (typeof RWDModuleRegistry !== "undefined") ? RWDModuleRegistry[id] : null;
     const target = $(id) || $("generic");
+    if(!opts.skipHistory && this.current && this.current !== id){
+      this.history.push(this.current);
+      if(this.history.length > 25) this.history.shift();
+    }
 
     if(mod && mod.title){
       const titleEl = target.querySelector(".screen-title");
@@ -317,6 +322,7 @@ const NavigationManager = {
     qsa(".bottom-nav button").forEach(b => b.classList.toggle("active", b.dataset.nav === id));
     $("sideMenu")?.classList.remove("open");
     this.current = id;
+    ScreenControls.refresh(id);
     window.scrollTo({top:0, behavior:"smooth"});
 
     if(id === "finance") FinanceManager.render();
@@ -593,8 +599,11 @@ const DebugPanel = {
 
 const Actions = {
   run(action, el){
-    if(action==="menu") $("sideMenu").classList.toggle("open");
-    if(action==="close-menu") $("sideMenu").classList.remove("open");
+    if(action==="menu") MenuManager.toggle();
+    if(action==="close-menu") MenuManager.close();
+    if(action==="nav-back") NavigationManager.back();
+    if(action==="nav-home") NavigationManager.navigate("home");
+    if(action==="clear-screen") ScreenControls.clearCurrent();
     if(action==="save-truck") TruckManager.saveFromForm();
     if(action==="clear-truck") TruckManager.clear();
     if(action==="add-part") PartsManager.addPart();
@@ -607,7 +616,7 @@ const Actions = {
     if(action==="quote-to-workorder") SmartQuoteEngine.toWorkOrder();
     if(action==="quote-to-invoice") SmartQuoteEngine.toInvoice();
     if(action==="voice") showToast("Voice shell ready. Browser speech backend plugs in next.");
-    if(action==="ai-full-back") NavigationManager.navigate("clock");
+    if(action==="ai-full-back") NavigationManager.back();
     if(action==="ai-full-clear") AiFullScreen.clear();
     if(action==="ai-full-send") AiFullScreen.send();
     if(action==="ai-full-voice") showToast("Voice shell ready. Speech backend plugs in next.");
@@ -869,9 +878,67 @@ const ThemeResetManager = {
 };
 
 
+/* ===== NAVIGATION FIX: HOME / MENU / BACK / CLEAR ===== */
+const MenuManager = {
+  toggle(){
+    const menu = $("sideMenu");
+    if(!menu) return;
+    menu.classList.toggle("open");
+    menu.setAttribute("aria-hidden", menu.classList.contains("open") ? "false" : "true");
+  },
+  close(){
+    const menu = $("sideMenu");
+    if(!menu) return;
+    menu.classList.remove("open");
+    menu.setAttribute("aria-hidden", "true");
+  }
+};
+
+const ScreenControls = {
+  installed:false,
+  install(){
+    if(this.installed) return;
+    qsa("main.screen").forEach(screen => {
+      if(screen.id === "home") return;
+      if(screen.querySelector(".screen-control-row")) return;
+      const row = document.createElement("div");
+      row.className = "screen-control-row";
+      row.innerHTML = '<button data-action="nav-back">← BACK</button><button data-action="nav-home">⌂ HOME</button><button data-action="clear-screen">CLEAR</button>';
+      screen.insertBefore(row, screen.firstElementChild);
+    });
+    document.addEventListener("click", e => {
+      const menu = $("sideMenu");
+      if(!menu || !menu.classList.contains("open")) return;
+      if(e.target.closest("#sideMenu") || e.target.closest('[data-action="menu"]')) return;
+      MenuManager.close();
+    }, true);
+    document.addEventListener("keydown", e => { if(e.key === "Escape") MenuManager.close(); });
+    this.installed = true;
+  },
+  refresh(id){
+    qsa(".screen-control-row").forEach(row => row.style.display = id === "home" ? "none" : "flex");
+  },
+  clearCurrent(){
+    const screen = $(NavigationManager.current);
+    if(!screen) return;
+    screen.querySelectorAll("input, textarea").forEach(el => {
+      if(["button","submit","file","checkbox","radio"].includes(el.type)) return;
+      el.value = "";
+    });
+    screen.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
+    showToast("Screen cleared");
+  }
+};
+
+NavigationManager.back = function(){
+  const prev = this.history.pop();
+  this.navigate(prev || "home", {skipHistory:true});
+};
+
+
 /* ===== V5.2 HOME ROUTE ALIAS FIX ===== */
 const HomeRouteAlias = {
-  homeId:"clock",
+  homeId:"home",
   install(){
     qsa('[data-nav="home"]').forEach(btn => btn.dataset.nav = this.homeId);
   },
@@ -896,6 +963,7 @@ function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;"
 function boot(){
   buildModules();
   RouteGuard.install();
+  ScreenControls.install();
   HomeRouteAlias.install();
   NavigationManager.init();
   ThemeManager.init();

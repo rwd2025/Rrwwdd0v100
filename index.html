@@ -24,7 +24,7 @@
     <div class="ui-layer">
       <header class="command-header">
         <button class="icon-btn" data-action="menu" aria-label="Menu">☰</button>
-        <div class="brand-mark">RW</div>
+        <div class="brand-mark" data-nav="home" title="Home">RW</div>
         <div class="brand-copy">
           <h1>ROLLING <span>WRENCH</span> AI</h1>
           <p>DIESEL DIAGNOSTICS & REPAIR PLATFORM</p>
@@ -34,13 +34,13 @@
       </header>
 
       <aside id="sideMenu" class="side-menu">
-        <button data-nav="clock">Home Command Center</button>
+        <button data-nav="home">Home Command Center</button>
         <button data-nav="truck">Truck Profile</button>
         <button data-nav="clock">Jobs / Time Clock</button>
         <button data-nav="parts">Parts / Scan</button>
         <button data-nav="invoice">Invoice Paper</button>
         <button data-nav="debug">Debug / Test</button>
-        <button data-action="close-menu">Close Menu</button>
+        <button data-action="close-menu">✕ Close Menu</button>
       </aside>
 
       <section class="active-strip" data-nav="truck">
@@ -378,7 +378,7 @@
       </main>
 
       <nav class="bottom-nav">
-        <button class="active" data-nav="clock">⌂<b>HOME</b></button>
+        <button class="active" data-nav="home">⌂<b>HOME</b></button>
         <button data-nav="faults">⚕<b>DOCTOR</b></button>
         <button data-nav="parts">⚙<b>PARTS</b></button>
         <button data-nav="repair">🛠<b>REPAIR</b></button>
