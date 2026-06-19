@@ -743,3 +743,35 @@ body[data-theme-choice="night"]{--accent-main:#94a3b8;--accent-2:#38bdf8;--accen
 .screen-control-row{display:flex;gap:8px;margin:0 0 12px 0;position:sticky;top:calc(env(safe-area-inset-top) + 4px);z-index:20;background:rgba(4,7,10,.74);backdrop-filter:blur(12px);padding:8px;border:1px solid var(--border);border-radius:12px}
 .screen-control-row button{flex:1;border:1px solid var(--border-strong);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-weight:900;padding:10px}
 .screen-control-row button:nth-child(2){border-color:var(--accent-main);box-shadow:0 0 10px var(--accent-glow)}
+
+/* ===== BA001 V5.3 SCROLL LEAK FIX =====
+   Prevent hidden app screens from stacking below Home on mobile/iPhone. */
+.dashboard-app main.screen:not(.active){
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  position:absolute!important;
+  left:-99999px!important;
+  top:0!important;
+}
+.dashboard-app main.screen.active{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+}
+body.menu-open{overflow:hidden}

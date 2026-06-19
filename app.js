@@ -988,3 +988,62 @@ function boot(){
   if("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js").catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", boot);
+/* ===== V5.3 HARD NAV / SCROLL LEAK PATCH ===== */
+(function(){
+  function hardShow(id){
+    id = (id === 'home' || !id) ? 'home' : id;
+    var target = document.getElementById(id) || document.getElementById('generic') || document.getElementById('home');
+    Array.from(document.querySelectorAll('main.screen')).forEach(function(screen){
+      var on = screen === target;
+      screen.classList.toggle('active', on);
+      screen.setAttribute('aria-hidden', on ? 'false' : 'true');
+      if(!on){
+        screen.style.display = 'none';
+        screen.style.visibility = 'hidden';
+        screen.style.height = '0px';
+        screen.style.overflow = 'hidden';
+      }else{
+        screen.style.display = 'block';
+        screen.style.visibility = 'visible';
+        screen.style.height = '';
+        screen.style.overflow = '';
+      }
+    });
+    Array.from(document.querySelectorAll('.bottom-nav button')).forEach(function(btn){
+      btn.classList.toggle('active', (btn.dataset.nav || '') === id || (id === 'home' && btn.dataset.nav === 'home'));
+    });
+    var menu = document.getElementById('sideMenu');
+    if(menu){ menu.classList.remove('open'); menu.setAttribute('aria-hidden','true'); }
+    document.body.classList.remove('menu-open');
+  }
+
+  var oldToggle = window.MenuManager && window.MenuManager.toggle;
+  if(window.MenuManager){
+    window.MenuManager.toggle = function(){
+      if(oldToggle) oldToggle.call(window.MenuManager);
+      var menu = document.getElementById('sideMenu');
+      document.body.classList.toggle('menu-open', !!(menu && menu.classList.contains('open')));
+    };
+    var oldClose = window.MenuManager.close;
+    window.MenuManager.close = function(){
+      if(oldClose) oldClose.call(window.MenuManager);
+      document.body.classList.remove('menu-open');
+    };
+  }
+
+  if(window.NavigationManager){
+    var oldNavigate = window.NavigationManager.navigate.bind(window.NavigationManager);
+    window.NavigationManager.navigate = function(id, opts){
+      id = (id === 'home' || id === 'dashboard') ? 'home' : id;
+      oldNavigate(id, opts || {});
+      hardShow(id);
+      this.current = id;
+      if(id === 'home') window.scrollTo(0,0);
+    };
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    hardShow('home');
+    setTimeout(function(){ hardShow((window.NavigationManager && window.NavigationManager.current) || 'home'); }, 250);
+  });
+})();
